@@ -1,6 +1,7 @@
-body, html, #root, .esri-form {
+body, html, #root {
   width: 100%;
   height: 100%;
+  margin:0;
 }
 
 .esri-view {
@@ -10,4 +11,9 @@ body, html, #root, .esri-form {
 
 .esri-editor {
   visibility: hidden;
+}
+
+.esri-editor {
+  width: 100%;
+  height: calc(100% - 82px);
 }

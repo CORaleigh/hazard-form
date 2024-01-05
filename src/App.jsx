@@ -6,6 +6,15 @@ import Editor from '@arcgis/core/widgets/Editor';
 import MapView from '@arcgis/core/views/MapView';
 import Search from '@arcgis/core/widgets/Search';
 import esriConfig from "@arcgis/core/config.js";
+
+import OAuthInfo from "@arcgis/core/identity/OAuthInfo";
+import esriId from "@arcgis/core/identity/IdentityManager"
+
+
+import "@esri/calcite-components/dist/components/calcite-notice";
+
+import { CalciteNotice } from "@esri/calcite-components-react";
+
 esriConfig.assetsPath = "./assets";
 import './App.css'
 
@@ -15,6 +24,40 @@ function App() {
   const searchDiv = useRef(null);
   const [error, setError] = useState("");
   const loaded = useRef(false);
+
+  const initSearch = (layer) => {
+    return new Search({
+      container: searchDiv.current,
+      includeDefaultSources: false,
+      sources: [
+        {  layer: layer,
+          placeholder: "Search by workorder ID",
+          maxResults: 5,
+          searchFields: ["workorderid"],
+          displayField: "workorderid"
+        }
+      ]
+    });
+  }
+  const initEditor = (mapView) => {
+    return new Editor({
+      view: mapView,
+      container: formDiv.current,
+      allowedWorkflows: 'update',
+      visibleElements: {
+        createFeaturesSection: false,
+        snappingControls: false,
+        snappingControlsElements: {
+          enabledToggle: false,
+          featureEnabledToggle: false,
+          header: false,
+          layerList: false,
+          selfEnabledToggle: false
+        },
+        editFeaturesSection: false
+      }
+    });    
+  }
   const setFeature = async (feature, editor) => {
     await editor.startUpdateWorkflowAtFeatureEdit(feature);    
     editor.container.setAttribute('hidden', '');     
@@ -27,69 +70,52 @@ function App() {
   useEffect(() => {
     if (!loaded.current) {
       loaded.current = true;
-      const map = new WebMap({
-        portalItem: {
-          portal: 'https://maps.raleighnc.gov/portal',
-          id: 'aeac0d28b8ec4caaa41e78d5cda300e0'
-        }
-      });
+
       const loadMap = async () => {
+        const info = new OAuthInfo({
+          portalUrl: 'https://maps.raleighnc.gov/portal',
+          appId:'5kHx8MymeBC9nt8e',
+          popup: false
+        });
+        esriId.registerOAuthInfos([info]);
+        try {
+          esriId.checkSignInStatus(info.portalUrl + '/sharing');
+        } catch {
+          esriId.getCredential(info.portalUrl + '/sharing');
+
+        }
+        
+
+        const map = new WebMap({
+          portalItem: {
+            portal: 'https://maps.raleighnc.gov/portal',
+            id: 'aeac0d28b8ec4caaa41e78d5cda300e0'
+          }
+        });        
         const mapView = new MapView({
           map: map,
           container: mapDiv.current
         });        
         await mapView.when();
         const layer = map.layers.getItemAt(0);
-        const editor = new Editor({
-          view: mapView,
-          container: formDiv.current,
-          allowedWorkflows: 'update',
-          visibleElements: {
-            createFeaturesSection: false,
-            snappingControls: false,
-            snappingControlsElements: {
-              enabledToggle: false,
-              featureEnabledToggle: false,
-              header: false,
-              layerList: false,
-              selfEnabledToggle: false
-            },
-            editFeaturesSection: false
-          }
-        });
-        const search = new Search({
-          container: searchDiv.current,
-          includeDefaultSources: false,
-          sources: [
-            {  layer: layer,
-              placeholder: "Search by workorder ID",
-              maxResults: 5,
-              searchFields: ["workorderid"],
-              displayField: "workorderid"
-            }
-          ]
-        });
-
+        const editor = initEditor(mapView);
+        const search = initSearch(layer);
         search.on('search-complete', e => {
           if (e.numResults > 0) {
             console.log(e.results[0].results[0]);
             setFeature(e.results[0].results[0].feature, editor);    
           }
-        });
+        });        
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
-       // if (id) {
-          const results = await layer.queryFeatures({where: `workorderid = '${id}'`, outFields: ['*']});
-          if (results.features.length) {
-            const feature = results.features[0];
-            setFeature(feature, editor);
+        const results = await layer.queryFeatures({where: `workorderid = '${id}'`, outFields: ['*']});
+        if (results.features.length) {
+          const feature = results.features[0];
+          setFeature(feature, editor);
 
-          } else {
-            //setError(`No workorder with an ID of ${id} found, search for a different workorder ID`)
-          }
-        // } else {
-        //   setError(`No workorder ID provided in the URL`)
-        // }
+        } else {
+          setError(`No workorder with an ID of ${id} found, search for a workorder below.`)
+        }
       }
       loadMap();
     }
@@ -97,7 +123,10 @@ function App() {
   },[]);
   return (
     <>
-      {error.length > 0 && error}
+      {<CalciteNotice open={error.length > 0 ? '' : undefined} closable kind="danger" icon="exclamation-mark-circle-f">
+        <div slot="title">Workorder ID Not Found</div>
+        <div slot="message">{error}</div>
+      </CalciteNotice>}
       <div className='header'>
         <div ref={searchDiv}></div>
       </div>

@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/raleighwater/hazard-form/',
+  base: '/hazard-form/',
   plugins: [react()],
 })
 

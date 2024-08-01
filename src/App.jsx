@@ -1,18 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import FeatureForm from '@arcgis/core/widgets/FeatureForm';
-import Graphic from '@arcgis/core/Graphic';
 import WebMap from '@arcgis/core/WebMap';
 import Editor from '@arcgis/core/widgets/Editor';
 import MapView from '@arcgis/core/views/MapView';
 import Search from '@arcgis/core/widgets/Search';
 import esriConfig from "@arcgis/core/config.js";
-
 import OAuthInfo from "@arcgis/core/identity/OAuthInfo";
 import esriId from "@arcgis/core/identity/IdentityManager"
-
-
 import "@esri/calcite-components/dist/components/calcite-notice";
-
 import { CalciteNotice } from "@esri/calcite-components-react";
 
 esriConfig.assetsPath = "./assets";
@@ -82,14 +76,11 @@ function App() {
           esriId.checkSignInStatus(info.portalUrl + '/sharing');
         } catch {
           esriId.getCredential(info.portalUrl + '/sharing');
-
         }
-        
-
         const map = new WebMap({
           portalItem: {
             portal: 'https://maps.raleighnc.gov/portal',
-            id: 'aeac0d28b8ec4caaa41e78d5cda300e0'
+            id: 'cd6701c78f624489bf71567711571070'//'aeac0d28b8ec4caaa41e78d5cda300e0'
           }
         });        
         const mapView = new MapView({
@@ -112,14 +103,12 @@ function App() {
         if (results.features.length) {
           const feature = results.features[0];
           setFeature(feature, editor);
-
         } else {
           setError(`No workorder with an ID of ${id} found, search for a workorder below.`)
         }
       }
       loadMap();
     }
-
   },[]);
   return (
     <>

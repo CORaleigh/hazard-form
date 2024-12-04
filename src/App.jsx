@@ -3,13 +3,13 @@ import WebMap from '@arcgis/core/WebMap';
 import Editor from '@arcgis/core/widgets/Editor';
 import MapView from '@arcgis/core/views/MapView';
 import Search from '@arcgis/core/widgets/Search';
-import esriConfig from "@arcgis/core/config.js";
 import OAuthInfo from "@arcgis/core/identity/OAuthInfo";
 import esriId from "@arcgis/core/identity/IdentityManager"
+
 import "@esri/calcite-components/dist/components/calcite-notice";
 import { CalciteNotice } from "@esri/calcite-components-react";
 
-esriConfig.assetsPath = "./assets";
+
 import './App.css'
 
 function App() {
@@ -49,6 +49,11 @@ function App() {
           selfEnabledToggle: false
         },
         editFeaturesSection: false
+      },
+      supportingWidgetDefaults: {
+        featureForm: {
+          groupDisplay: "all"
+        }
       }
     });    
   }
@@ -80,21 +85,25 @@ function App() {
         const map = new WebMap({
           portalItem: {
             portal: 'https://maps.raleighnc.gov/portal',
-            id: 'cd6701c78f624489bf71567711571070'//'aeac0d28b8ec4caaa41e78d5cda300e0'
+            id: '7f17f3f42c26484389675dcc241bed90'//'aeac0d28b8ec4caaa41e78d5cda300e0'
           }
         });        
+
         const mapView = new MapView({
           map: map,
           container: mapDiv.current
         });        
         await mapView.when();
         const layer = map.layers.getItemAt(0);
+
         const editor = initEditor(mapView);
+
         const search = initSearch(layer);
         search.on('search-complete', e => {
           if (e.numResults > 0) {
             console.log(e.results[0].results[0]);
             setFeature(e.results[0].results[0].feature, editor);    
+            setError('');
           }
         });        
         const urlParams = new URLSearchParams(window.location.search);
@@ -103,6 +112,7 @@ function App() {
         if (results.features.length) {
           const feature = results.features[0];
           setFeature(feature, editor);
+          setError('');
         } else {
           setError(`No workorder with an ID of ${id} found, search for a workorder below.`)
         }
